@@ -42,7 +42,8 @@ class GAN():
   def __init__(self, latent_dim = 64, d_params=[256, 256], g_params=[256, 256], num_epochs = 300, batch_size = 512, loss_function = nn.BCELoss(), lr = 0.002):
       self.discriminator = None
       self.generator = None
-      self.scaler = MinMaxScaler()
+      self.continous_scaler = MinMaxScaler()
+      self.categorical_scaler = OneHotEncoder()
       self.d_params = d_params
       self.g_params = g_params
       self.latent_dim = latent_dim
@@ -51,18 +52,37 @@ class GAN():
       self.loss_function = loss_function
       self.lr = lr
 
-  def fit(self, data):
-      self.scaler.fit(data)
+  def fit(self, data, categorical_columns = []):
+      continous, categorical = self.__split(data, categorical_columns)
+      self.categorical_columns = categorical_columns
+      self.continous_columns = list(continous.columns)
+
+
+      self.continous_scaler.fit(continous)
+      self.categorical_scaler.fit(categorical)
+      continous, categorical = self.__transform(continous, categorical)
+      d1 = pd.DataFrame(continous, columns=self.continous_columns)
+      data = d1.join(
+          pd.DataFrame(categorical, columns=self.categorical_scaler.get_feature_names_out())
+      )
+
+
       self.data_dim = data.shape[1]
       self.discriminator = Discriminator(self.data_dim, self.d_params)
       self.generator = Generator(self.latent_dim, self.data_dim, self.g_params)
 
-  def transform(self, data):
-      return self.scaler.transform(data)
+      self.__train(data)
 
-  def train_loader(self, data):
-      d = self.transform(data)
-      d = torch.from_numpy(d)
+  def __transform(self, continous, categorical):
+      return self.continous_scaler.transform(continous), self.categorical_scaler.transform(categorical).toarray().astype(np.float64)
+
+  def __split(self, data, categorical_columns = []):
+      categorical = data[categorical_columns]
+      continous = data.drop(categorical_columns, axis=1)
+      return continous, categorical
+
+  def __train_loader(self, data):
+      d = torch.tensor(data.values)
       d = d.type(dtype=torch.float32)
       d_length = d.size(dim=0)
       d_labels = torch.zeros(d_length)
@@ -74,17 +94,16 @@ class GAN():
       )
       return train_loader
 
-  def train(self, data, k = 5, l = 1):
+  def __train(self, data, k = 5, l = 1):
     optimizer_discriminator = torch.optim.Adam(self.discriminator.parameters(), lr=self.lr, betas=(0.5, 0.9), weight_decay=1e-6)
     optimizer_generator     = torch.optim.Adam(self.generator.parameters(), lr=self.lr, betas=(0.5, 0.9), weight_decay=1e-6)
-    data_loader = self.train_loader(data)
+    data_loader = self.__train_loader(data)
 
     for epoch in range(self.num_epochs):
       for n, (real_samples, _) in enumerate(data_loader):
         batch_size = real_samples.size(dim=0)
         real_samples_labels = torch.ones((batch_size, 1))        
 
-        # discriminator training cycle
         for i in range(k):
           latent_space_samples = torch.randn((batch_size, self.latent_dim), dtype=torch.float)
 
@@ -98,6 +117,7 @@ class GAN():
               (real_samples_labels, generated_samples_labels)
           )
 
+          # discriminator training
           self.discriminator.zero_grad()
           output_discriminator = self.discriminator(all_samples)
           loss_discriminator = self.loss_function(
@@ -128,4 +148,13 @@ class GAN():
   def sample(self, quantity = 1000):
     latent_samples = torch.randn(quantity, self.latent_dim)
     generated_samples = self.generator(latent_samples)
-    return self.scaler.inverse_transform(generated_samples.detach())
+    df = pd.DataFrame(generated_samples, columns = list(self.continous_columns) + list(self.categorical_scaler.get_feature_names_out()))
+    continous, categorical = self.__split(df, self.categorical_scaler.get_feature_names_out())
+    if self.continous_columns:
+      scaled_continous = self.continous_scaler.inverse_transform(continous)
+      if self.categorical_columns:
+        scaled_categorical = self.categorical_scaler.inverse_transform(categorical)
+        return np.concatenate((scaled_continous, scaled_categorical), axis=1)
+      return scaled_continous
+    scaled_categorical = self.categorical_scaler.inverse_transform(categorical)
+    return scaled_categorical
