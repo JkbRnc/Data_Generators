@@ -9,7 +9,7 @@ import seaborn as sn
 
 import numpy as np
 
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
 class Encoder(nn.Module):
   def __init__(self, input_dim, latent_dim = 32, hidden_params = [256, 256]):
@@ -24,7 +24,7 @@ class Encoder(nn.Module):
                           
         ]
         input = layer
-      
+
       self.model = nn.Sequential(*hidden_layers)
       self.mean = nn.Linear(input, latent_dim)
       self.logvar = nn.Linear(input, latent_dim)
@@ -111,27 +111,27 @@ class VAE():
       for i, batch in enumerate(data_loader):
         optimizer.zero_grad()
         mu, logvar = self.encoder(batch)
-        z = self.reparametrize(mu, logvar)
+        z = self.__reparametrize(mu, logvar)
         reconstruction = self.decoder(z)
 
-        loss = self.loss_function(batch, reconstruction, mu, logvar)
+        loss = self.__loss_function(batch, reconstruction, mu, logvar)
         loss.backward()
         optimizer.step()
 
         if epoch % 10 == 0 and i == 0:
           print(f"Epoch: {epoch}, loss: {loss}")
 
-  def reparametrize(self, mu, logvar):
+  def __reparametrize(self, mu, logvar):
     if self.training:
       std = torch.exp(0.5 * logvar)
       eps = torch.randn_like(std)
       return eps * std + mu
     return mu
 
-  def loss_function(self, data, reconstruction, mu, logvar):
-    cross_entropy = F.mse_loss(input=reconstruction, target=data, reduction='sum')
-    KLD = 0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-    return cross_entropy - KLD
+  def __loss_function(self, data, reconstruction, mu, logvar):
+    MSE = F.mse_loss(input=reconstruction, target=data, reduction='sum')
+    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    return MSE + KLD
 
   def sample(self, quantity = 1000):
     self.training = False
@@ -140,7 +140,6 @@ class VAE():
       generated_samples = self.decoder(latent_samples)
       df = pd.DataFrame(generated_samples, columns = list(self.continous_columns) + list(self.categorical_scaler.get_feature_names_out()))
       continous, categorical = self.__split(df, self.categorical_scaler.get_feature_names_out())
-      
       if self.continous_columns:
         scaled_continous = self.continous_scaler.inverse_transform(continous)
         if self.categorical_columns:
