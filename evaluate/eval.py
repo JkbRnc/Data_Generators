@@ -1,3 +1,5 @@
+import pandas as pd
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
@@ -31,3 +33,22 @@ def evaluate_randomforest(original, generated, target_column, classification=Tru
         y_test, test_model.predict(x_test)
     )
   return model_score, test_score
+
+
+def create_statistics(data, target_column, model, categorical_columns = [], k = 100):
+  model.fit(data, categorical_columns)
+  model_score = []
+  test_score = []
+  for _ in range(k):
+    samples = model.sample(10000)
+    samples_df = pd.DataFrame(samples, columns=model.columns)
+    
+    x, y = evaluate_randomforest(data, samples_df, target_column=target_column, classification=False)
+    model_score.append(x)
+    test_score.append(y)
+  return np.array(model_score), np.array(test_score)
+
+
+def distance (og, new):
+  m = og.to_numpy() - new.to_numpy()
+  return np.linalg.norm(m) / m.shape[0]**2
