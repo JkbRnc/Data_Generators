@@ -6,7 +6,7 @@ import pandas as pd
 import seaborn as sn
 
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
 class Discriminator(nn.Module):
   def __init__(self, input_dim, hidden_layers_params):
