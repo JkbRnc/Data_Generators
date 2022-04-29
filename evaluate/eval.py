@@ -35,7 +35,7 @@ def evaluate_randomforest(original, generated, target_column, classification=Tru
   return model_score, test_score
 
 
-def create_statistics(data, target_column, model, categorical_columns = [], k = 100):
+def create_statistics(data, target_column, model, categorical_columns = [], k = 100, classification=False):
   model.fit(data, categorical_columns)
   model_score = []
   test_score = []
@@ -43,7 +43,7 @@ def create_statistics(data, target_column, model, categorical_columns = [], k = 
     samples = model.sample(10000)
     samples_df = pd.DataFrame(samples, columns=model.columns)
     
-    x, y = evaluate_randomforest(data, samples_df, target_column=target_column, classification=False)
+    x, y = evaluate_randomforest(data, samples_df, target_column=target_column, classification=classification)
     model_score.append(x)
     test_score.append(y)
   return np.array(model_score), np.array(test_score)
