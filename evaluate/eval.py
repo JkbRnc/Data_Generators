@@ -67,15 +67,17 @@ def evaluate_knn(original, generated, target_column, classification=True):
   return model_score, test_score
 
 
-def create_statistics(data, target_column, model, categorical_columns = [], k = 100, classification = False, sample_size = 10000):
+def create_statistics(data, target_column, model, categorical_columns = [], k = 100, classification = False, sample_size = 10000, method='randomforest'):
   model.fit(data, categorical_columns)
   model_score = []
   test_score = []
   for _ in range(k):
     samples = model.sample(sample_size)
     samples_df = pd.DataFrame(samples, columns=model.columns)
-    
-    x, y = evaluate_randomforest(data, samples_df, target_column=target_column, classification=classification)
+    if method == 'randomforest':
+      x, y = evaluate_randomforest(data, samples_df, target_column=target_column, classification=classification)
+    else:
+      x, y = evaluate_knn(data, samples_df, target_column=target_column, classification=classification)
     model_score.append(x)
     test_score.append(y)
   return np.array(model_score), np.array(test_score)
