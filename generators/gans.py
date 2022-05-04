@@ -3,7 +3,6 @@ from torch import nn
 from torch.nn import functional as F
 
 import pandas as pd
-import seaborn as sn
 
 import numpy as np
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -148,7 +147,7 @@ class GAN():
   def sample(self, quantity = 1000):
     latent_samples = torch.randn(quantity, self.latent_dim)
     generated_samples = self.__generator(latent_samples)
-    df = pd.DataFrame(generated_samples, columns = list(self.__continous_columns) + list(self.__categorical_scaler.get_feature_names_out()))
+    df = pd.DataFrame(generated_samples.detach(), columns = list(self.__continous_columns) + list(self.__categorical_scaler.get_feature_names_out()))
     continous, categorical = self.__split(df, self.__categorical_scaler.get_feature_names_out())
     if self.__continous_columns:
       scaled_continous = self.__continous_scaler.inverse_transform(continous)

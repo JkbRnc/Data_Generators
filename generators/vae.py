@@ -138,7 +138,7 @@ class VAE():
     with torch.no_grad():
       latent_samples = torch.randn(quantity, self.latent_dim)
       generated_samples = self.__decoder(latent_samples)
-      df = pd.DataFrame(generated_samples, columns = list(self.__continous_columns) + list(self.__categorical_scaler.get_feature_names_out()))
+      df = pd.DataFrame(generated_samples.detach(), columns = list(self.__continous_columns) + list(self.__categorical_scaler.get_feature_names_out()))
       continous, categorical = self.__split(df, self.__categorical_scaler.get_feature_names_out())
       
       if self.__continous_columns:
