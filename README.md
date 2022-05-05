@@ -11,13 +11,13 @@ Currently there are inluded 2 modifications of generative models -- Generative A
 # Usage
 
 To generate data. First you need to install mandatory libraries (python setup.py install). Then just use generate_script.py to generate your data.
-Mandatory arguments for generate_script.py:
-[DATA_PATH] - path to input data, can be absolute path or url
-[MODEL_PATH] - path to existing model or where to save it
-Optional argument:
-[SAMPLE_SIZE] - size of generated data sample, default value set to 100 samples
-[CATEGORICAL_COLUMNS] - list of categorical columns in dataset, names separated only by comma
-[MODEL_TYPE] - name of desired model (vae or gans), by default set to vae
+Mandatory arguments for generate_script.py:  
+[DATA_PATH] - path to input data, can be absolute path or url  
+[MODEL_PATH] - path to existing model or where to save it  
+Optional argument:  
+[SAMPLE_SIZE] - size of generated data sample, default value set to 100 samples  
+[CATEGORICAL_COLUMNS] - list of categorical columns in dataset, names separated only by comma  
+[MODEL_TYPE] - name of desired model (vae or gans), by default set to vae  
 
 # References
 
