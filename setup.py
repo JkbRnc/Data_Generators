@@ -4,8 +4,10 @@ from setuptools import setup, find_packages
 setup(
     name="TabularDataGenerator",
     version='1.0.0',
-    # python_requires='=>3.6',
-    packages=find_packages(include=['Data_Generators', 'Data_Generators.*']),
+    python_requires='>=3.10.4',
+    packages=find_packages(
+        include=['Data_Generators', 'Data_Generators.*']
+        ),
     install_requires=[
         'pandas',
         'numpy',
